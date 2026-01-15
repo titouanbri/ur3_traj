@@ -1,0 +1,4 @@
+# ROS 2 build folders (si jamais tu construis dans le package, ce qui est déconseillé mais possible)
+build/
+install/
+log/
