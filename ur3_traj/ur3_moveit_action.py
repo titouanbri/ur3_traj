@@ -44,7 +44,7 @@ class UR3MoveItActionClient(Node):
         
         # [MODIFICATION] Paramètres de vitesse globale (0.0 à 1.0)
         # 0.1 = 10% de la vitesse max du robot
-        self.velocity_factor = 0.1 
+        self.velocity_factor = 0.1
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
