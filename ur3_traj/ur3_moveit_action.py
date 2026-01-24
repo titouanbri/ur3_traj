@@ -92,14 +92,14 @@ class UR3MoveItActionClient(Node):
         self._display_path_pub.publish(display_msg)
         print(">>> Trajectoire publiée sur RViz.")
         
-        try:
-            user_input = input(f">>> Vitesse: {self.velocity_factor*100}%. [ENTRÉE] pour exécuter, 'n' pour annuler : ")
-        except EOFError:
-            user_input = 'n'
+        # try:
+        #     user_input = input(f">>> Vitesse: {self.velocity_factor*100}%. [ENTRÉE] pour exécuter, 'n' pour annuler : ")
+        # except EOFError:
+        #     user_input = 'n'
             
-        if user_input.lower() == 'n':
-            print("Annulation.")
-            return False
+        # if user_input.lower() == 'n':
+        #     print("Annulation.")
+        #     return False
         return True
 
     # ---------------------------------------------------------
