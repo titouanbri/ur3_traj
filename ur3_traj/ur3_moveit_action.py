@@ -40,12 +40,10 @@ class UR3MoveItActionClient(Node):
         self._move_action_client.wait_for_server()
         self._execute_action_client.wait_for_server()
         self._compute_cartesian_client.wait_for_service()
-        print("Connecté !")
+        print("Connecté")
         
         
-        # [MODIFICATION] Paramètres de vitesse globale (0.0 à 1.0)
-        # 0.1 = 10% de la vitesse max du robot
-        self.velocity_factor = 0.1
+        self.velocity_factor = 0.1  # % de la vitesse max du robot
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -102,21 +100,13 @@ class UR3MoveItActionClient(Node):
         #     return False
         return True
 
-    # ---------------------------------------------------------
-    # [NOUVEAU] FONCTION DE RE-TIMING (Pour Cartesian Path)
-    # ---------------------------------------------------------
     def retimer_trajectoire(self, robot_traj):
-        """
-        Le service GetCartesianPath ne remplit pas les champs 'time_from_start'.
-        Nous devons calculer des temps artificiels pour ralentir le mouvement
-        selon self.velocity_factor.
-        """
+        
         joint_traj = robot_traj.joint_trajectory
         if not joint_traj.points:
             return robot_traj
 
         # Vitesse max approximative d'un joint UR (rad/s) utilisée comme référence
-        # Si on met une valeur basse ici, le robot sera encore plus lent.
         MAX_JOINT_VEL = 3.0 
         target_vel = MAX_JOINT_VEL * self.velocity_factor
 
@@ -158,9 +148,6 @@ class UR3MoveItActionClient(Node):
         robot_traj.joint_trajectory = joint_traj
         return robot_traj
 
-    # ---------------------------------------------------------
-    # 2. TRAJECTOIRE CARTÉSIENNE
-    # ---------------------------------------------------------
     def send_cartesian_path(self, waypoints):
         self.movement_done = False
         self.success = False
@@ -182,10 +169,6 @@ class UR3MoveItActionClient(Node):
         req.start_state = RobotState()
         req.start_state.joint_state = self._latest_joint_state
         
-        # Note: req.max_velocity_scaling_factor existe dans certaines versions récentes
-        # mais est souvent ignoré par le service Cartesian simple.
-        # Nous utilisons la méthode manuelle (retimer_trajectoire) pour être sûrs.
-
         future = self._compute_cartesian_client.call_async(req)
         future.add_done_callback(self._cb_cartesian_computed)
 
