@@ -251,10 +251,10 @@ class UR3MoveItActionClient(Node):
         q = [start_point.orientation.x,start_point.orientation.y,start_point.orientation.z,start_point.orientation.w]
         euler=R.from_quat(q).as_euler('xyz', degrees=True)
         final_points=[]
-        for i in range(5):
-            current_point.position.z-=0.03
-            current_point.position.x+=0.02
-            euler[0]+=10
+        for i in range(4):
+            current_point.position.z-=0.02
+            current_point.position.x+=0.05
+            euler[1]+=-15
             q=R.from_euler('xyz', euler, degrees=True).as_quat()
             current_point.orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
             final_points.append(deepcopy(current_point))
@@ -277,9 +277,9 @@ def main(args=None):
 
     try:
         print("\n--- Go initial pose ---")
-        q = R.from_euler('xyz', [-180, 0, 90], degrees=True).as_quat() # Retourne [x, y, z, w]
+        q = R.from_euler('xyz', [-180, 0, 180], degrees=True).as_quat() # Retourne [x, y, z, w]
         target_pose = Pose(
-            position=Point(x=-0.32, y=0.06, z=0.47), 
+            position=Point(x=-0.32, y=0.02, z=0.47), 
             orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
         )
 
@@ -301,23 +301,28 @@ def main(args=None):
 
         input("\enter to continue")
 
-        traj=ur3_client.create_point(point_bas)
-        traj_inter=ur3_client.interpoler_poses(traj, 20)
-        ur3_client.send_cartesian_path(traj_inter)
-        ur3_client.wait_for_completion()
-
-
-        # q2=R.from_euler('xyz', [-160, 0, 90], degrees=True).as_quat()
-        # point2=Pose(position=Point(x=-0.26, y=0.06, z=0.43), orientation=Quaternion(x=q2[0], y=q2[1], z=q2[2], w=q2[3]))
-
-        # q3=R.from_euler('xyz', [-140, 0, 90], degrees=True).as_quat()
-        # point3=Pose(position=Point(x=-0.20, y=0.06, z=0.40), orientation=Quaternion(x=q3[0], y=q3[1], z=q3[2], w=q3[3]))
-
-
-        # trajectoire = [target_pose, point2,point3]
-        # traj_interpolee = ur3_client.interpoler_poses(trajectoire, 20)
-        # ur3_client.send_cartesian_path(traj_interpolee)
+        # traj=ur3_client.create_point(point_bas)
+        # traj.insert(0, point_bas)
+        # traj_inter=ur3_client.interpoler_poses(traj, 20)
+        # ur3_client.send_cartesian_path(traj_inter)
         # ur3_client.wait_for_completion()
+
+
+        q2=R.from_euler('xyz', [-180, -15, 180], degrees=True).as_quat()
+        point2=Pose(position=Point(x=-0.23, y=0.02, z=0.43), orientation=Quaternion(x=q2[0], y=q2[1], z=q2[2], w=q2[3]))
+
+        q3=R.from_euler('xyz', [-180, -35, 180], degrees=True).as_quat()
+        point3=Pose(position=Point(x=-0.15, y=0.02, z=0.30), orientation=Quaternion(x=q3[0], y=q3[1], z=q3[2], w=q3[3]))
+
+        # q4=R.from_euler('xyz', [-180, -40, 180], degrees=True).as_quat()
+        # point4=Pose(position=Point(x=-0.15, y=0.02, z=0.30), orientation=Quaternion(x=q4[0], y=q4[1], z=q4[2], w=q4[3]))
+
+
+
+        trajectoire = [target_pose, point2,point3]
+        traj_interpolee = ur3_client.interpoler_poses(trajectoire, 30)
+        ur3_client.send_cartesian_path(traj_interpolee)
+        ur3_client.wait_for_completion()
 
 
     except KeyboardInterrupt:
