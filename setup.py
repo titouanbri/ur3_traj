@@ -35,6 +35,8 @@ setup(
             'scene_object = ur3_traj.scene_object:main',
             'visu_3D_point = ur3_traj.visu_3D_point:main',
             'record_F = ur3_traj.record_F:main',
+            'gripper=ur3_traj.gripper:main'
+            
         ],
     },
 )
