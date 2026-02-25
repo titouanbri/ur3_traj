@@ -54,7 +54,7 @@ class UR3MoveItActionClient(Node):
         print("Connecté")
         
         
-        self.velocity_factor = 0.1  # % de la vitesse max du robot
+        self.velocity_factor = 0.15  # % de la vitesse max du robot
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -342,7 +342,7 @@ def main(args=None):
         print("\n--- Go initial pose ---")
         ur3_client.open_gripper()
         
-        point1=[-0.1972, -0.0617, 0.5991, -0.089, -0.790, -0.037, 0.606]
+        point1=[-0.18, -0.05, 0.59, -0.089, -0.790, -0.037, 0.606]
         ur3_client.send_command(point1)
 
         point_bas=[-0.2995, -0.0257, 0.5469, 0.048, 0.941, 0.060, -0.331]
@@ -359,10 +359,20 @@ def main(args=None):
         point3=[-0.1616, -0.0565, 0.3140, 0.085, 0.987, 0.052, -0.126]
         ur3_client.send_command(point3)
 
-        point4=[-0.0809, 0.2720, 0.3698, 0.756, 0.548, 0.242, -0.264]
-        ur3_client.send_command(point4)
+        # point4=[-0.0809, 0.2720, 0.3698, 0.756, 0.548, 0.242, -0.264]
+        # point4=[-0.1325, 0.0639, 0.3333, 0.370, 0.900, 0.127, -0.192]
+
+        # ur3_client.send_command(point4)
 
         ur3_client.open_gripper()
+
+
+
+
+
+
+
+
 
 
     except KeyboardInterrupt:
