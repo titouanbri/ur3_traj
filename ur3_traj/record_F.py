@@ -13,13 +13,13 @@ class ForceTorqueCamRecorder(Node):
         super().__init__('ft_cam_recorder_node')
 
         # --- Paramètres de configuration ---
-        self.record_duration = 10  # secondes
+        self.record_duration = 20  # secondes
         self.topic_name = '/force_torque_sensor_broadcaster/wrench'
         self.base_frame = 'base_link'   
         self.target_frame = 'tool0'
         
         # Paramètres Vidéo
-        self.camera_index = 0  # 0 est généralement la webcam par défaut ou USB. Essayez 2 ou 4 si vous avez une cam intégrée.
+        self.camera_index = 2  # 0 est généralement la webcam par défaut ou USB. Essayez 2 ou 4 si vous avez une cam intégrée.
         self.fps = 30.0        # Images par seconde souhaitées
 
         # --- Gestion des fichiers ---

@@ -47,13 +47,13 @@ class GripperController(Node):
         """Ouvre le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 1.0)"""
         self.get_logger().info("Ouverture du gripper...")
         # Ton code ROS1 envoyait (1, 1, 1) pour ouvrir
-        self._set_io_state(pin=1, state=1.0) 
+        self._set_io_state(pin=1, state=0.0) 
 
     def close_gripper(self):
         """Ferme le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 0.0)"""
         self.get_logger().info("Fermeture du gripper...")
         # Ton code ROS1 envoyait (1, 1, 0) pour fermer
-        self._set_io_state(pin=1, state=0.0)
+        self._set_io_state(pin=1, state=1.0)
 
 # Exemple d'utilisation si lancé directement
 def main(args=None):

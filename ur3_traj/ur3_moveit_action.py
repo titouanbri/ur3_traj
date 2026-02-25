@@ -19,10 +19,21 @@ from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectoryPoint
 from tf2_ros import Buffer, TransformListener
 from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
+from ur_msgs.srv import SetIO
+
 
 class UR3MoveItActionClient(Node):
     def __init__(self):
         super().__init__('ur3_moveit_client')
+
+        # gripper
+        self.service_name = '/io_and_status_controller/set_io'
+        self.io_client = self.create_client(SetIO, self.service_name)
+        while not self.io_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info(f'Service {self.service_name} non disponible, attente...')
+
+
+
         
         # Clients d'action et services
         self._move_action_client = ActionClient(self, MoveGroup, 'move_action')
@@ -271,6 +282,46 @@ class UR3MoveItActionClient(Node):
         self.wait_for_completion()
 
 
+    def _set_io_state(self, pin, state):
+        """
+        Méthode générique pour appeler le service SetIO.
+        fun=1 (Digital Output), pin=ton pin, state=état désiré
+        """
+        req = SetIO.Request()
+        req.fun = 1  # 1 correspond généralement aux Digital Outputs sur l'UR
+        req.pin = pin
+        req.state = state
+
+        # Appel asynchrone
+        future = self.io_client.call_async(req)
+        
+        # Dans un script séquentiel simple, on peut bloquer jusqu'à la réponse
+        # Note : Dans une architecture complexe, évite de bloquer le thread principal ainsi.
+        rclpy.spin_until_future_complete(self, future)
+        
+        try:
+            response = future.result()
+            if response.success:
+                self.get_logger().info(f'IO Set avec succès : Pin {pin} -> {state}')
+            else:
+                self.get_logger().warn(f'Echec de la commande IO sur le Pin {pin}')
+        except Exception as e:
+            self.get_logger().error(f'Appel de service échoué : {e}')
+
+    def open_gripper(self):
+        """Ouvre le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 1.0)"""
+        self.get_logger().info("Ouverture du gripper...")
+        # Ton code ROS1 envoyait (1, 1, 1) pour ouvrir
+        self._set_io_state(pin=1, state=0.0) 
+
+    def close_gripper(self):
+        """Ferme le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 0.0)"""
+        self.get_logger().info("Fermeture du gripper...")
+        # Ton code ROS1 envoyait (1, 1, 0) pour fermer
+        self._set_io_state(pin=1, state=1.0)
+
+
+
 
 
     
@@ -289,21 +340,29 @@ def main(args=None):
 
     try:
         print("\n--- Go initial pose ---")
+        ur3_client.open_gripper()
         
-        point1=[-0.29,-0.009,0.54,0.153,0.858,0.062,-0.486]
+        point1=[-0.1972, -0.0617, 0.5991, -0.089, -0.790, -0.037, 0.606]
         ur3_client.send_command(point1)
 
-        point_bas=[-0.4052, 0.0458, 0.4086,0.099, 0.947, 0.008, -0.306]
+        point_bas=[-0.2995, -0.0257, 0.5469, 0.048, 0.941, 0.060, -0.331]
         ur3_client.send_command(point_bas)
 
+        ur3_client.close_gripper()
 
-        input("\enter to continue")
 
-        point3=[-0.1741, -0.0032, 0.2637,0.016, 0.993, 0.047, -0.109]
+
+
+        # input("\enter to continue")
+        time.sleep(1)
+
+        point3=[-0.1616, -0.0565, 0.3140, 0.085, 0.987, 0.052, -0.126]
         ur3_client.send_command(point3)
 
-        point4=[-0.0464, 0.3107, 0.2085,0.840, 0.534, 0.078, -0.052]
+        point4=[-0.0809, 0.2720, 0.3698, 0.756, 0.548, 0.242, -0.264]
         ur3_client.send_command(point4)
+
+        ur3_client.open_gripper()
 
 
     except KeyboardInterrupt:
