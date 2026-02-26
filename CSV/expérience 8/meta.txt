@@ -1,0 +1,5 @@
+chaussure blanche 
+vitesse 0.1 
+colle neoprenne
+
+la colle a dû se barrer 
