@@ -1,0 +1,3 @@
+chaussure blanche 
+vitesse 0.3 
+colle neoprenne bien mise 

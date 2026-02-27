@@ -6,9 +6,6 @@ class GripperController(Node):
     def __init__(self):
         super().__init__('gripper')
         
-        # Le nom du service dépend de ta configuration driver UR ROS2.
-        # Par défaut c'est souvent '/io_and_status_controller/set_io'
-        # ou '/ur_hardware_interface/set_io' (si mapping legacy).
         self.service_name = '/io_and_status_controller/set_io'
         
         self.io_client = self.create_client(SetIO, self.service_name)
@@ -46,16 +43,13 @@ class GripperController(Node):
     def open_gripper(self):
         """Ouvre le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 1.0)"""
         self.get_logger().info("Ouverture du gripper...")
-        # Ton code ROS1 envoyait (1, 1, 1) pour ouvrir
         self._set_io_state(pin=1, state=0.0) 
 
     def close_gripper(self):
         """Ferme le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 0.0)"""
         self.get_logger().info("Fermeture du gripper...")
-        # Ton code ROS1 envoyait (1, 1, 0) pour fermer
         self._set_io_state(pin=1, state=1.0)
 
-# Exemple d'utilisation si lancé directement
 def main(args=None):
     rclpy.init(args=args)
     gripper = GripperController()

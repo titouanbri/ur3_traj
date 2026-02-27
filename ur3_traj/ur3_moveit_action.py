@@ -54,7 +54,7 @@ class UR3MoveItActionClient(Node):
         print("Connecté")
         
         
-        self.velocity_factor = 0.1 # % de la vitesse max du robot
+        self.velocity_factor = 0.05 # % de la vitesse max du robot
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)

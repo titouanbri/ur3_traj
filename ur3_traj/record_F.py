@@ -14,7 +14,7 @@ class ForceTorqueCamRecorder(Node):
         super().__init__('ft_cam_recorder_node')
 
         # --- Paramètres de configuration ---
-        self.record_duration = 14  # secondes
+        self.record_duration = 20  # secondes
         self.topic_name = '/force_torque_sensor_broadcaster/wrench'
         self.joint_state_topic = '/joint_states' # ### NOUVEAU JOINT_STATES : Nom du topic
         self.base_frame = 'base_link'   
