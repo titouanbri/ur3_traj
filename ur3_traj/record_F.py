@@ -2,29 +2,29 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import WrenchStamped
-from sensor_msgs.msg import JointState  # ### NOUVEAU JOINT_STATES : Import du type de message
+from sensor_msgs.msg import JointState  
 from tf2_ros import Buffer, TransformListener, LookupException, ConnectivityException, ExtrapolationException
 import csv
 import os
 from datetime import datetime
-import cv2  # ### NOUVEAU : Import OpenCV
+import cv2  
 
 class ForceTorqueCamRecorder(Node):
     def __init__(self):
         super().__init__('ft_cam_recorder_node')
 
-        # --- Paramètres de configuration ---
+        #Paramètres de configuration
         self.record_duration = 20  # secondes
         self.topic_name = '/force_torque_sensor_broadcaster/wrench'
-        self.joint_state_topic = '/joint_states' # ### NOUVEAU JOINT_STATES : Nom du topic
+        self.joint_state_topic = '/joint_states' 
         self.base_frame = 'base_link'   
         self.target_frame = 'tool0'
         
         # Paramètres Vidéo
-        self.camera_index = 2  # 0 est généralement la webcam par défaut ou USB. Essayez 2 ou 4 si vous avez une cam intégrée.
-        self.fps = 30.0        # Images par seconde souhaitées
+        self.camera_index = 2  # or 0 if it's not the good one (in the case of several cameras)
+        self.fps = 30.0       
 
-        # --- Gestion des fichiers ---
+        # Gestion des fichiers
         self.output_dir = '/home/titouan/ros2_ws/src/ur3_traj/CSV'
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
@@ -33,17 +33,17 @@ class ForceTorqueCamRecorder(Node):
         self.csv_filename = os.path.join(self.output_dir, f'ur3_data_{timestamp}.csv')
         self.video_filename = os.path.join(self.output_dir, f'ur3_video_{timestamp}.mp4')
 
-        # --- Variables d'état ---
+        # Variables d'état
         self.start_time = None
         self.data_buffer = []
         self.is_recording = True
-        self.latest_joint_velocities = [0.0] * 6 # ### NOUVEAU JOINT_STATES : Init à 0 pour les 6 axes de l'UR3
+        self.latest_joint_velocities = [0.0] * 6 
 
-        # --- Initialisation TF ---
+        # Initialisation TF
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        # --- Initialisation Caméra (OpenCV) ---
+        # Initialisation Caméra (OpenCV)
         self.cap = cv2.VideoCapture(self.camera_index)
         
         # Vérification caméra
@@ -57,31 +57,29 @@ class ForceTorqueCamRecorder(Node):
             fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
             self.video_writer = cv2.VideoWriter(self.video_filename, fourcc, self.fps, (width, height))
 
-        # --- Subscriber Force/Torque ---
+        # Subscriber Force/Torque
         self.subscription = self.create_subscription(
             WrenchStamped,
             self.topic_name,
             self.listener_callback,
             10)
 
-        # --- Subscriber Joint States ### NOUVEAU JOINT_STATES ---
+        # Subscriber Joint States
         self.joint_sub = self.create_subscription(
             JointState,
             self.joint_state_topic,
             self.joint_state_callback,
             10)
         
-        # --- Timer Vidéo ---
+        # Timer Vidéo
         self.timer = self.create_timer(1.0/self.fps, self.video_timer_callback)
         
         self.get_logger().info(f"Prêt. En attente de données FT pour lancer l'enregistrement...")
 
     def joint_state_callback(self, msg):
-        """ ### NOUVEAU JOINT_STATES : Mise à jour continue des vitesses articulaires """
         if not self.is_recording:
             return
         
-        # Le driver UR envoie les infos des 6 axes. On s'assure que la liste n'est pas vide.
         if msg.velocity:
             self.latest_joint_velocities = list(msg.velocity)
 
@@ -99,7 +97,6 @@ class ForceTorqueCamRecorder(Node):
         if not self.is_recording:
             return
 
-        # 1. Gestion du temps (Déclencheur global)
         if self.start_time is None:
             self.start_time = self.get_clock().now()
             self.get_logger().info(f"DÉBUT ENREGISTREMENT ({self.record_duration}s) - CSV, Vidéo et Joints synchros.")
@@ -111,7 +108,7 @@ class ForceTorqueCamRecorder(Node):
             self.stop_recording()
             return
 
-        # 2. Récupération TF 
+        # Récupération TF 
         try:
             t = self.tf_buffer.lookup_transform(
                 self.base_frame, self.target_frame, rclpy.time.Time())
@@ -126,7 +123,7 @@ class ForceTorqueCamRecorder(Node):
         except (LookupException, ConnectivityException, ExtrapolationException):
             return
 
-        # 3. Buffer Data (Incluant les vitesses articulaires)
+        # Buffer Data 
         row = [
             elapsed_time,
             msg.wrench.force.x, msg.wrench.force.y, msg.wrench.force.z,
@@ -135,7 +132,6 @@ class ForceTorqueCamRecorder(Node):
             quat_x, quat_y, quat_z, quat_w
         ]
         
-        # ### NOUVEAU JOINT_STATES : Ajout des 6 vitesses à la fin de la ligne
         row.extend(self.latest_joint_velocities) 
         
         self.data_buffer.append(row)
@@ -159,7 +155,6 @@ class ForceTorqueCamRecorder(Node):
         try:
             with open(self.csv_filename, mode='w', newline='') as file:
                 writer = csv.writer(file)
-                # ### NOUVEAU JOINT_STATES : Ajout des en-têtes Vj1 à Vj6
                 header = ['Time', 'Fx', 'Fy', 'Fz', 'Tx', 'Ty', 'Tz', 
                           'Px', 'Py', 'Pz', 'Qx', 'Qy', 'Qz', 'Qw',
                           'Vj1', 'Vj2', 'Vj3', 'Vj4', 'Vj5', 'Vj6']

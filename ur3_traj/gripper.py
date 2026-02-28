@@ -20,15 +20,13 @@ class GripperController(Node):
         fun=1 (Digital Output), pin=ton pin, state=état désiré
         """
         req = SetIO.Request()
-        req.fun = 1  # 1 correspond généralement aux Digital Outputs sur l'UR
+        req.fun = 1  # 1 = Digital Output
         req.pin = pin
         req.state = state
 
         # Appel asynchrone
         future = self.io_client.call_async(req)
         
-        # Dans un script séquentiel simple, on peut bloquer jusqu'à la réponse
-        # Note : Dans une architecture complexe, évite de bloquer le thread principal ainsi.
         rclpy.spin_until_future_complete(self, future)
         
         try:
@@ -41,12 +39,10 @@ class GripperController(Node):
             self.get_logger().error(f'Appel de service échoué : {e}')
 
     def open_gripper(self):
-        """Ouvre le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 1.0)"""
         self.get_logger().info("Ouverture du gripper...")
         self._set_io_state(pin=1, state=0.0) 
 
     def close_gripper(self):
-        """Ferme le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 0.0)"""
         self.get_logger().info("Fermeture du gripper...")
         self._set_io_state(pin=1, state=1.0)
 

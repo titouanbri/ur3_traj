@@ -36,8 +36,6 @@ class UR3MoveItActionClient(Node):
         self.movement_done = False
         self.success = False
 
-        # Note: Si vous voulez juste lire la pose sans lancer MoveIt, 
-        # vous pouvez commenter les wait_for_server ci-dessous pour gagner du temps au démarrage.
         print("Attente des serveurs MoveIt...")
         self._move_action_client.wait_for_server()
         self._execute_action_client.wait_for_server()
@@ -54,14 +52,12 @@ class UR3MoveItActionClient(Node):
     def get_current_pose(self):
         """Récupère la pose de tool0 par rapport à base_link"""
         try:
-            # Time(seconds=0) demande la transformation la plus récente disponible
-            # C'est souvent plus robuste que rclpy.time.Time() qui demande l'instant "t" exact
             now = rclpy.time.Time() 
             
             trans = self.tf_buffer.lookup_transform(
                 'base_link', 
                 'tool0', 
-                now) # Vous pouvez aussi utiliser rclpy.time.Time() si vos horloges sont bien synchro
+                now) 
             
             current_pose = Pose()
             current_pose.position.x = trans.transform.translation.x
@@ -72,20 +68,18 @@ class UR3MoveItActionClient(Node):
             return current_pose
             
         except (LookupException, ConnectivityException, ExtrapolationException) as e:
-            # On ne spamme pas les erreurs dans le terminal, on retourne juste None
             return None
 
-    # Les méthodes de mouvement sont conservées dans la classe mais inutilisées dans le main
     def wait_for_completion(self):
         while not self.movement_done:
             rclpy.spin_once(self, timeout_sec=0.1)
         return self.success
 
     def send_joint_goal(self, joint_values):
-        pass # (Code masqué pour clarté, identique à l'original)
+        pass 
 
     def send_cartesian_path(self, waypoints):
-        pass # (Code masqué pour clarté, identique à l'original)
+        pass
     
     def _cb_cartesian_computed(self, future):
         pass 
@@ -99,8 +93,6 @@ class UR3MoveItActionClient(Node):
     def get_result_callback(self, future):
         pass
     
-    # ... autres méthodes utilitaires ...
-
 def main(args=None):
     rclpy.init(args=args)
     ur3_client = UR3MoveItActionClient()
@@ -109,21 +101,17 @@ def main(args=None):
     
     try:
         while rclpy.ok():
-            # 1. IMPORTANT : On fait tourner le noeud pour mettre à jour le buffer TF
             rclpy.spin_once(ur3_client, timeout_sec=0.1)
             
-            # 2. Lecture de la pose
             pose = ur3_client.get_current_pose()
             
             if pose:
-                # Affichage propre avec 4 décimales
                 pos_str = f"X={pose.position.x:.4f}, Y={pose.position.y:.4f}, Z={pose.position.z:.4f}"
                 rot_str = f"QX={pose.orientation.x:.3f}, QY={pose.orientation.y:.3f}, QZ={pose.orientation.z:.3f}, QW={pose.orientation.w:.3f}"
                 print(f"\r[Pose Actuelle] {pos_str} | {rot_str}", end="")
             else:
                 print("\r[Pose Actuelle] En attente des données TF...", end="")
             
-            # Petite pause pour ne pas surcharger le CPU
             time.sleep(0.1)
 
     except KeyboardInterrupt:

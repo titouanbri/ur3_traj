@@ -71,14 +71,12 @@ class UR3MoveItActionClient(Node):
 
     def get_current_pose(self, reference_frame="base_link", target_frame="tool0"):
             try:
-                # [CORRECTION] Utiliser Time() vide = "Dernière transfo disponible"
-                # C'est beaucoup plus robuste que rclpy.time.Time()
                 from rclpy.time import Time
                 
                 trans = self.tf_buffer.lookup_transform(
                     reference_frame,
                     target_frame,
-                    Time()) # <--- Changement ici : on demande la dernière dispo
+                    Time()) # last one
 
                 current_pose = Pose()
                 current_pose.position.x = trans.transform.translation.x
@@ -101,14 +99,6 @@ class UR3MoveItActionClient(Node):
         self._display_path_pub.publish(display_msg)
         print(">>> Trajectoire publiée sur RViz.")
         
-        # try:
-        #     user_input = input(f">>> Vitesse: {self.velocity_factor*100}%. [ENTRÉE] pour exécuter, 'n' pour annuler : ")
-        # except EOFError:
-        #     user_input = 'n'
-            
-        # if user_input.lower() == 'n':
-        #     print("Annulation.")
-        #     return False
         return True
 
     def retimer_trajectoire(self, robot_traj):
@@ -117,7 +107,7 @@ class UR3MoveItActionClient(Node):
         if not joint_traj.points:
             return robot_traj
 
-        # Vitesse max approximative d'un joint UR (rad/s) utilisée comme référence
+        # Vitesse max d'un joint
         MAX_JOINT_VEL = 3.0 
         target_vel = MAX_JOINT_VEL * self.velocity_factor
 
@@ -130,16 +120,14 @@ class UR3MoveItActionClient(Node):
             p_prev = joint_traj.points[i-1]
             p_curr = joint_traj.points[i]
 
-            # Calculer la plus grande distance parcourue par un joint entre ces deux points
-            # On prend le max pour que le joint le plus lent dicte le temps (synchro)
+
+            # We take the maximum joint difference to ensure we don't exceed the velocity limit on any joint
             diffs = [abs(q2 - q1) for q1, q2 in zip(p_prev.positions, p_curr.positions)]
             max_diff = max(diffs)
 
             # Temps = Distance / Vitesse
-            # On ajoute un petit epsilon pour éviter la division par zéro
             dt = max_diff / (target_vel + 1e-6)
             
-            # Si dt est trop petit (points très proches), on force un minimum
             if dt < 0.01: 
                 dt = 0.01
 
@@ -151,8 +139,8 @@ class UR3MoveItActionClient(Node):
             p_curr.time_from_start.sec = sec
             p_curr.time_from_start.nanosec = nanosec
             
-            # On nettoie les vélocités/accélérations calculées par le solveur IK
-            # pour laisser le contrôleur du robot gérer l'interpolation propre
+
+            #we let MoveIt! compute the velocities and accelerations based on the new timing
             p_curr.velocities = []
             p_curr.accelerations = []
 
@@ -229,7 +217,6 @@ class UR3MoveItActionClient(Node):
         self.movement_done = True
 
     def interpoler_poses(self, liste_poses, nombre_points_total):
-        # (Fonction inchangée)
         numeric_poses = []
         for p in liste_poses:
             valeurs = [p.position.x, p.position.y, p.position.z,
@@ -288,15 +275,13 @@ class UR3MoveItActionClient(Node):
         fun=1 (Digital Output), pin=ton pin, state=état désiré
         """
         req = SetIO.Request()
-        req.fun = 1  # 1 correspond généralement aux Digital Outputs sur l'UR
+        req.fun = 1  # 1 = Digital Output
         req.pin = pin
         req.state = state
 
         # Appel asynchrone
         future = self.io_client.call_async(req)
         
-        # Dans un script séquentiel simple, on peut bloquer jusqu'à la réponse
-        # Note : Dans une architecture complexe, évite de bloquer le thread principal ainsi.
         rclpy.spin_until_future_complete(self, future)
         
         try:
@@ -311,13 +296,11 @@ class UR3MoveItActionClient(Node):
     def open_gripper(self):
         """Ouvre le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 1.0)"""
         self.get_logger().info("Ouverture du gripper...")
-        # Ton code ROS1 envoyait (1, 1, 1) pour ouvrir
         self._set_io_state(pin=1, state=0.0) 
 
     def close_gripper(self):
         """Ferme le gripper (Logique basée sur ton code ROS 1 : Pin 1 à 0.0)"""
         self.get_logger().info("Fermeture du gripper...")
-        # Ton code ROS1 envoyait (1, 1, 0) pour fermer
         self._set_io_state(pin=1, state=1.0)
 
 
